@@ -32,6 +32,7 @@ module lfric_xios_setup_mod
   use lfric_xios_utils_mod,          only: set_prime_io_mesh, parse_date_as_xios
   use linked_list_mod,               only: linked_list_type, linked_list_item_type
   use log_mod,                       only: log_event, log_level_error, &
+                                           log_level_debug, &
                                            log_level_warning, log_level_info
   use mesh_mod,                      only: mesh_type
   use mesh_collection_mod,           only: mesh_collection
@@ -410,13 +411,17 @@ contains
 
         domain_fs_name = name_from_functionspace(domain_function_spaces(fs_index))
         domain_name = "checkpoint_" // trim(domain_fs_name)
+        call log_event( "XIOS domain ['"//trim(domain_name)//"'] is being " // &
+                        "created for checkpointing.", log_level_debug)
 
         ! Enable use of the XIOS i_index for relevant function spaces
         if (any( use_i_index == domain_function_spaces(fs_index) )) then
+          call log_event( "xios domain using i index", log_level_debug)
           call checkpoint_domain_init( domain_function_spaces(fs_index), &
                                        trim(domain_name), mesh, &
                                        sample_chi, .true. )
         else
+          call log_event( "xios domain not using i index", log_level_debug)
           call checkpoint_domain_init( domain_function_spaces(fs_index), &
                                        trim(domain_name), mesh, &
                                        sample_chi, .false. )
@@ -842,7 +847,10 @@ contains
                               latvalue_1d=checkpoint_lat)
     call xios_set_domain_attr(trim(domain_name), bounds_lon_1d=bnd_checkpoint_lon, &
                               bounds_lat_1d=bnd_checkpoint_lat)
+    call log_event( "XIOS domain ['"//trim(domain_name)//"'] setting domain_attr" // &
+                    " chunking_weight_i=1", log_level_debug)
 
+    call xios_set_domain_attr(trim(domain_name), chunking_weight_i=dble(1))
     ! If we have requested to use domain index then get it and use it
     if (use_index) then
 

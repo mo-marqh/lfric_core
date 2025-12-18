@@ -100,7 +100,12 @@ contains
       call log_event('unexpected legacy field: ' // trim(field_id), log_level_error)
     end if
 
+    call log_event( "XIOS metadata for field: ['"//trim(field_id)//"'] is being " // &
+                    "attached to a domain: ['"//trim(domain_id)//"']", log_level_debug)
     call xios_set_attr(field, domain_ref=domain_id)
+    call log_event( "XIOS metadata ['"//trim(field_id)//"'] setting " // &
+                    " chunking_blocksize_target=4.", log_level_debug)
+    call xios_set_attr(field, chunking_blocksize_target=dble(4.0))
   end subroutine handle_legacy_fields
 
   !> @brief Get file handle from XIOS
@@ -257,6 +262,8 @@ contains
 
         if (use_legacy) then
           call handle_legacy_fields(field, dict_field_id)
+          call log_event( "XIOS metadata ['"//trim(field_name)//"'] is using " // &
+                          "legacy for checkpointing.", log_level_debug)
         else
           grid_ref = get_field_grid_ref(dict_field_id)
           if (grid_ref /= '') then
