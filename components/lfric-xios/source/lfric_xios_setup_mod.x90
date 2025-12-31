@@ -848,9 +848,9 @@ contains
     call xios_set_domain_attr(trim(domain_name), bounds_lon_1d=bnd_checkpoint_lon, &
                               bounds_lat_1d=bnd_checkpoint_lat)
     call log_event( "XIOS domain ['"//trim(domain_name)//"'] setting domain_attr" // &
-                    " chunking_weight_i=1", log_level_debug)
+                    " chunking_weight_i=32.", log_level_debug)
 
-    call xios_set_domain_attr(trim(domain_name), chunking_weight_i=dble(1))
+    call xios_set_domain_attr(trim(domain_name), chunking_weight_i=dble(32))
     ! If we have requested to use domain index then get it and use it
     if (use_index) then
 
@@ -1070,6 +1070,10 @@ contains
                                latvalue_1d=lat_data )
     call xios_set_domain_attr( trim(domain_id), bounds_lon_1d=lon_bounds, &
                                bounds_lat_1d=lat_bounds )
+    call log_event( "XIOS domain ['"//trim(domain_id)//"'] setting domain_attr" // &
+                    " chunking_weight_i=32.", log_level_debug)
+
+    call xios_set_domain_attr(trim(domain_id), chunking_weight_i=dble(32))
 
     ! Consolidate the domains into a single 2D UGRID mesh
     if (file_convention == file_convention_ugrid) then

@@ -101,11 +101,8 @@ contains
     end if
 
     call log_event( "XIOS metadata for field: ['"//trim(field_id)//"'] is being " // &
-                    "attached to a domain: ['"//trim(domain_id)//"']", log_level_debug)
+                    "attached to a legacy domain: ['"//trim(domain_id)//"']", log_level_debug)
     call xios_set_attr(field, domain_ref=domain_id)
-    call log_event( "XIOS metadata ['"//trim(field_id)//"'] setting " // &
-                    " chunking_blocksize_target=4.", log_level_debug)
-    call xios_set_attr(field, chunking_blocksize_target=dble(4.0))
   end subroutine handle_legacy_fields
 
   !> @brief Get file handle from XIOS
@@ -275,6 +272,9 @@ contains
             if (axis_ref /= '') call xios_set_attr(field, axis_ref=axis_ref)
           end if
         end if
+        call log_event( "XIOS metadata ['"//trim(field_id)//"'] setting " // &
+                        " chunking_blocksize_target=4.", log_level_debug)
+        call xios_set_attr(field, chunking_blocksize_target=dble(4.0))
       end if
     end do
   end subroutine add_field
