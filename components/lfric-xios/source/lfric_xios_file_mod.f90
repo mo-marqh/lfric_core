@@ -420,7 +420,7 @@ subroutine register_with_context(self)
 
     ! Iterate over field collection and register fields
     do i = 1, size(self%fields)
-      call self%fields(i)%register()
+      call self%fields(i)%register((self%io_mode == FILE_MODE_READ))
     end do
 
     ! Set up time axis if needed
