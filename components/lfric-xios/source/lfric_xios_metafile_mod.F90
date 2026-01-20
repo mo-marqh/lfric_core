@@ -269,6 +269,11 @@ contains
           end if
         end if
       end if
+      if (mode == RESTARTING) then
+        ! Is restarting, then set read_access to True.
+        call xios_set_field_attr(field_id, read_access=.true.)
+      end if
+
     end do
   end subroutine add_field
 
