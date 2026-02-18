@@ -15,7 +15,7 @@ module lfric_xios_driver_mod
 
   implicit none
 
-  public :: lfric_xios_initialise, lfric_xios_finalise
+  public :: lfric_xios_initialise, lfric_xios_finalise, lfric_xios_context_finalise
 
 contains
 
@@ -46,9 +46,21 @@ contains
 
     implicit none
 
-    call xios_context_finalize()
     call xios_finalize()
 
   end subroutine lfric_xios_finalise
+  
+  !> @brief In some configurations that do not use ModelDB it is
+  !> necessary to finalise the XIOS context explicitly. Required
+  !> for XIOS3 but backwards compatible with XIOS2
+  !>
+  
+  subroutine lfric_xios_context_finalise()
+
+    implicit none
+
+    call xios_context_finalize()
+
+  end subroutine lfric_xios_context_finalise
 
 end module lfric_xios_driver_mod
