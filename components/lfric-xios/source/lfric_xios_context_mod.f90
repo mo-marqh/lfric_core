@@ -21,7 +21,8 @@ module lfric_xios_context_mod
   use lfric_xios_file_mod,  only : lfric_xios_file_type
   use lfric_mpi_mod,        only : lfric_comm_type
   use log_mod,              only : log_event, log_scratch_space, &
-                                   log_level_error, log_level_debug
+                                   log_level_error, log_level_debug, &
+                                   log_level_info
   use lfric_xios_setup_mod, only : init_xios_calendar,   &
                                    init_xios_dimensions, &
                                    setup_xios_files
@@ -193,6 +194,8 @@ contains
 
     type(linked_list_item_type), pointer :: loop => null()
     type(lfric_xios_file_type),  pointer :: file => null()
+    
+    call log_event('Before LFRic XIOS Context Mod file write', LOG_LEVEL_INFO)
 
     if (this%xios_context_initialised) then
       ! Perform final write
@@ -201,18 +204,25 @@ contains
         do while (associated(loop))
           select type( list_item => loop%payload )
             type is (lfric_xios_file_type)
+              call log_event('File in list', LOG_LEVEL_INFO)
               file => list_item
-              if (file%mode_is_write()) call file%send_fields()
+              if (file%mode_is_write()) then
+                call log_event('File to write', LOG_LEVEL_INFO)
+                call file%send_fields()
+              end if
           end select
           loop => loop%next
         end do
       end if
+      
+      call log_event('After LFRic XIOS Context Mod file write', LOG_LEVEL_INFO)
 
       ! Finalise the XIOS context - all data will be written to disk and files
       ! will be closed.
-      write(log_scratch_space, "(A)") "Finalising XIOS context: " // this%get_context_name()
-      call log_event(log_scratch_space, log_level_debug)
-      call xios_context_finalize()
+      !write(log_scratch_space, "(A)") "Finalising XIOS context: " // this%get_context_name()
+      !call log_event(log_scratch_space, log_level_debug)
+      !call xios_context_finalize()
+      !call log_event('After xios_context_finalize', LOG_LEVEL_INFO)
 
       ! Only take action if this is a regional model with UGRID Projected
       ! coordinates, as these are awaiting XIOS feature development
