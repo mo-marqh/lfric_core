@@ -30,6 +30,7 @@ module lfric_xios_setup_mod
   use lfric_xios_file_mod,           only: lfric_xios_file_type
   use lfric_xios_process_output_mod, only: xyz_scaling_factor
   use lfric_xios_utils_mod,          only: set_prime_io_mesh, parse_date_as_xios
+  use lfric_core_version_mod,        only: lfric_core_version_char
   use linked_list_mod,               only: linked_list_type, linked_list_item_type
   use log_mod,                       only: log_event, log_level_error, &
                                            log_level_warning, log_level_info
@@ -478,7 +479,7 @@ contains
       call log_event("Invalid choice for file convention", log_level_error)
 
     end select
-    call xios_set_attr(file_definition, description="LFRic file format v3.1_dev")
+    call xios_set_attr(file_definition, description="LFRic file format " // lfric_core_version_char)
     ! Start at the head of the file linked list
     loop => files_list%get_head()
     do while(associated(loop))
