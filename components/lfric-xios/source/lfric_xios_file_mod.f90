@@ -257,7 +257,7 @@ function lfric_xios_file_constructor( file_name, xios_id, io_mode, freq,      &
   if (present(field_group_id)) then
     self%field_group_id = field_group_id
   else
-    self%field_group_id = trim(self%xios_id)//"_fields"
+    self%field_group_id = trim(self%xios_id)//"_field_group"
   end if
 
   ! Set up XIOS fields representing attached field collection
@@ -425,8 +425,11 @@ subroutine register_with_context(self)
   end if
 
   ! Set up read_access attribute for fields in file
-   if (self%mode_is_read()) then
-     call xios_set_attr(file_fields, read_access=.true.)
+  if (self%mode_is_read()) then
+    call log_event( "Setting read_access for file ["//trim(self%xios_id)//"] " // &
+                    "field group: ["//trim(self%field_group_id)// "]", log_level_debug )
+    call xios_set_attr(file_fields, read_access=.true.)
+    ! call xios_set_fieldgroup_attr(trim(self%field_group_id), read_access=.true.)
    end if
 
   ! Set up fields in file
