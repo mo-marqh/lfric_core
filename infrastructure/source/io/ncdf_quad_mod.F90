@@ -26,10 +26,15 @@ use netcdf,  only: nf90_max_name, nf90_open, nf90_write, nf90_nowrite,    &
                    nf90_clobber, nf90_enddef, nf90_inquire_dimension,     &
                    nf90_inq_dimid, nf90_def_dim, nf90_create,             &
                    nf90_inq_attname, nf90_inquire_attribute,              &
-                   nf90_redef, nf90_close, nf90_put_att, nf90_64bit_offset
+                   nf90_redef, nf90_close, nf90_put_att,                  &
+                   nf90_64bit_offset, nf90_var_par_access, nf90_collective, &
+                   nf90_netcdf4
 
 use ugrid_file_mod, only: ugrid_file_type
 use file_mod,       only: file_mode_read, file_mode_write
+use lfric_mpi_mod,  only: global_mpi
+
+use mpi_f08,  only: mpi_info, mpi_info_create
 
 implicit none
 
@@ -241,6 +246,7 @@ subroutine file_open(self, file_name, file_mode)
   character(str_long) :: cmess
 
   integer(i_def) :: mode
+  type(mpi_info) :: info
 
   self%file_name = file_name
   cmess = 'Opening file "'//trim(self%file_name)//'" '
@@ -265,7 +271,11 @@ subroutine file_open(self, file_name, file_mode)
     write(cmess,'(A)') trim(cmess) // '(read-only)'
   end if
 
-  ierr = nf90_open( trim(self%file_name), mode, self%ncid )
+  call mpi_info_create(info, ierr)
+
+  ierr = nf90_open( trim(self%file_name), mode, self%ncid,          &
+                  comm=global_mpi%get_mpi_comm(),                   &
+                  info=info%mpi_val )
   call check_err(ierr, routine, cmess)
 
   return
@@ -312,14 +322,18 @@ subroutine file_new(self, file_name)
   integer(i_def) :: ierr
   character(*), parameter :: routine = 'file_new'
   character(str_long) :: cmess
+  type(mpi_info) :: info
 
   self%file_name = file_name
 
   ! Create the NetCDF file with 64-bit offsets to support large file sizes
   cmess = 'Creating file, "'//trim(self%file_name)//'"'
+  call mpi_info_create(info, ierr)
   ierr = nf90_create( path=trim(self%file_name),                 &
-                      cmode=ior(nf90_clobber,nf90_64bit_offset), &
-                      ncid=self%ncid )
+                      !cmode=ior(nf90_clobber,nf90_64bit_offset), &
+                      cmode=ior(nf90_clobber,nf90_netcdf4), &
+                      ncid=self%ncid, comm=global_mpi%get_mpi_comm(),      &
+                      info=info%mpi_val )
   call check_err(ierr, routine, cmess)
 
   return
@@ -2228,11 +2242,15 @@ subroutine read_mesh( self,                                              &
 
   ! Node coordinates
   cmess = 'Getting node x coords for mesh "'//trim(mesh_name)//'"'
+  ierr = nf90_var_par_access(self%ncid, self%mesh_node_x_id, nf90_collective)
+  call check_err(ierr, routine, cmess)
   ierr  = nf90_get_var( self%ncid, self%mesh_node_x_id, &
                         node_coordinates_ncdf(1,:))
   call check_err(ierr, routine, cmess)
 
   cmess = 'Getting node y coords for mesh "'//trim(mesh_name)//'"'
+  ierr = nf90_var_par_access(self%ncid, self%mesh_node_y_id, nf90_collective)
+  call check_err(ierr, routine, cmess)
   ierr  = nf90_get_var( self%ncid, self%mesh_node_y_id, &
                         node_coordinates_ncdf(2,:))
   call check_err(ierr, routine, cmess)
@@ -2240,11 +2258,15 @@ subroutine read_mesh( self,                                              &
 
   ! Face coordinates
   cmess = 'Getting face x coords for mesh "'//trim(mesh_name)//'"'
+  ierr = nf90_var_par_access(self%ncid, self%mesh_face_x_id, nf90_collective)
+  call check_err(ierr, routine, cmess)
   ierr  = nf90_get_var( self%ncid, self%mesh_face_x_id, &
                         face_coordinates_ncdf(1,:))
   call check_err(ierr, routine, cmess)
 
   cmess = 'Getting face y coords for mesh "'//trim(mesh_name)//'"'
+  ierr = nf90_var_par_access(self%ncid, self%mesh_face_y_id, nf90_collective)
+  call check_err(ierr, routine, cmess)
   ierr  = nf90_get_var( self%ncid, self%mesh_face_y_id, &
                         face_coordinates_ncdf(2,:))
   call check_err(ierr, routine, cmess)
@@ -2252,6 +2274,8 @@ subroutine read_mesh( self,                                              &
 
   ! Face-Node connectivity
   cmess = 'Getting face-node connectivity for mesh "'//trim(mesh_name)//'"'
+  ierr = nf90_var_par_access(self%ncid, self%mesh_face_nodes_id, nf90_collective)
+  call check_err(ierr, routine, cmess)
   ierr  = nf90_get_var( self%ncid, self%mesh_face_nodes_id, &
                         face_node_connectivity(:,:) )
   call check_err(ierr, routine, cmess)
@@ -2259,6 +2283,8 @@ subroutine read_mesh( self,                                              &
 
   ! Face-Edge connectivity
   cmess = 'Getting face-edge connectivity for mesh "'//trim(mesh_name)//'"'
+  ierr = nf90_var_par_access(self%ncid, self%mesh_face_edges_id, nf90_collective)
+  call check_err(ierr, routine, cmess)
   ierr  = nf90_get_var( self%ncid, self%mesh_face_edges_id, &
                         face_edge_connectivity(:,:) )
   call check_err(ierr, routine, cmess)
@@ -2266,6 +2292,8 @@ subroutine read_mesh( self,                                              &
 
   ! Face-Face connectivity
   cmess = 'Getting face-face connectivity for mesh "'//trim(mesh_name)//'"'
+  ierr = nf90_var_par_access(self%ncid, self%mesh_face_links_id, nf90_collective)
+  call check_err(ierr, routine, cmess)
   ierr  = nf90_get_var( self%ncid, self%mesh_face_links_id, &
                         face_face_connectivity(:,:))
   call check_err(ierr, routine, cmess)
@@ -2282,6 +2310,8 @@ subroutine read_mesh( self,                                              &
 
   ! Edge-Node connectivity
   cmess = 'Getting edge-node connectivity for mesh "'//trim(mesh_name)//'"'
+  ierr = nf90_var_par_access(self%ncid, self%mesh_edge_nodes_id, nf90_collective)
+  call check_err(ierr, routine, cmess)
   ierr  = nf90_get_var( self%ncid, self%mesh_edge_nodes_id, &
                         edge_node_connectivity(:,:) )
   call check_err(ierr, routine, cmess)
@@ -2415,6 +2445,7 @@ subroutine read_mesh( self,                                              &
     allocate( self%edge_on_cell_gid (4,self%nmesh_faces) )
 
 
+    ierr = nf90_var_par_access(self%ncid, self%node_cell_owner_id, nf90_collective)
     ierr = nf90_get_var( self%ncid,               &
                          self%node_cell_owner_id, &
                          self%node_cell_owner(:) )
@@ -2422,6 +2453,7 @@ subroutine read_mesh( self,                                              &
       allocate(node_cell_owner, source=self%node_cell_owner)
     end if
 
+    ierr = nf90_var_par_access(self%ncid, self%edge_cell_owner_id, nf90_collective)
     ierr = nf90_get_var( self%ncid,               &
                          self%edge_cell_owner_id, &
                          self%edge_cell_owner(:) )
@@ -2429,6 +2461,7 @@ subroutine read_mesh( self,                                              &
       allocate(edge_cell_owner, source=self%edge_cell_owner)
     end if
 
+    ierr = nf90_var_par_access(self%ncid, self%num_inner_id, nf90_collective)
     ierr = nf90_get_var( self%ncid,         &
                          self%num_inner_id, &
                          self%num_inner(:) )
@@ -2436,6 +2469,7 @@ subroutine read_mesh( self,                                              &
       allocate(num_inner, source=self%num_inner)
     end if
 
+    ierr = nf90_var_par_access(self%ncid, self%num_halo_id, nf90_collective)
     ierr = nf90_get_var( self%ncid,        &
                          self%num_halo_id, &
                          self%num_halo(:) )
@@ -2443,6 +2477,7 @@ subroutine read_mesh( self,                                              &
       allocate(num_halo, source=self%num_halo)
     end if
 
+    ierr = nf90_var_par_access(self%ncid, self%last_inner_cell_id, nf90_collective)
     ierr = nf90_get_var( self%ncid,               &
                          self%last_inner_cell_id, &
                          self%last_inner_cell(:) )
@@ -2450,6 +2485,7 @@ subroutine read_mesh( self,                                              &
       allocate(last_inner_cell, source=self%last_inner_cell)
     end if
 
+    ierr = nf90_var_par_access(self%ncid, self%last_halo_cell_id, nf90_collective)
     ierr = nf90_get_var( self%ncid,              &
                          self%last_halo_cell_id, &
                          self%last_halo_cell(:) )
@@ -2485,24 +2521,28 @@ subroutine read_mesh( self,                                              &
       constructor_inputs = self%constructor_inputs
     end if
 
+    ierr = nf90_var_par_access(self%ncid, self%domain_extents_id, nf90_collective)
     ierr = nf90_get_var( self%ncid, self%domain_extents_id, &
                          self%domain_extents(:,:) )
     if (ierr == NF90_NOERR) then
       domain_extents(:,:) = self%domain_extents(:,:)
     end if
 
+    ierr = nf90_var_par_access(self%ncid, self%global_cells_id, nf90_collective)
     ierr = nf90_get_var( self%ncid, self%global_cells_id, &
                          self%cell_gid(:) )
     if (ierr == NF90_NOERR) then
       allocate( cell_gid, source=self%cell_gid )
     end if
 
+    ierr = nf90_var_par_access(self%ncid, self%global_face_node_id, nf90_collective)
     ierr = nf90_get_var( self%ncid, self%global_face_node_id, &
                          self%node_on_cell_gid(:,:) )
     if (ierr == NF90_NOERR) then
       allocate( node_on_cell_gid, source=self%node_on_cell_gid )
     end if
 
+    ierr = nf90_var_par_access(self%ncid, self%global_face_edge_id, nf90_collective)
     ierr = nf90_get_var( self%ncid, self%global_face_edge_id, &
                          self%edge_on_cell_gid(:,:) )
     if (ierr == NF90_NOERR) then
@@ -2527,6 +2567,7 @@ subroutine read_mesh( self,                                              &
                          self%constructor_inputs )
     constructor_inputs = self%constructor_inputs
 
+    ierr = nf90_var_par_access(self%ncid, self%domain_extents_id, nf90_collective)
     ierr = nf90_get_var( self%ncid, self%domain_extents_id, &
                          self%domain_extents(:,:) )
     if (ierr == NF90_NOERR) then
@@ -2675,6 +2716,8 @@ subroutine read_map( self,             &
   cmess = 'Getting '//trim(source_mesh_name)//'-'// &
           trim(target_mesh_name)//' mesh-mesh connectivity'
 
+  ierr = nf90_var_par_access(self%ncid, mesh_map_id, nf90_collective)
+  call check_err(ierr, routine, cmess)
   ierr = nf90_get_var( self%ncid,   &
                        mesh_map_id, &
                        mesh_map(:,:,:) )

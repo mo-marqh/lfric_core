@@ -16,6 +16,8 @@ module lfric_ncdf_file_mod
                            nf90_strerror, nf90_noerr, nf90_64bit_offset, &
                            nf90_put_att, nf90_inq_varid, nf90_global,    &
                            nf90_enddef, nf90_inquire, nf90_inq_varids
+  use lfric_mpi_mod, only: global_mpi
+  use mpi_f08,  only: mpi_info, mpi_info_create
 
   implicit none
 
@@ -127,8 +129,12 @@ contains
 
     integer(kind=i_def)         :: ierr
     character(len=*), parameter :: routine = 'open_file'
+    type(mpi_info) :: info
 
-    ierr = nf90_open( trim(self%name), self%mode, self%ncid )
+    call mpi_info_create(info, ierr)
+    ierr = nf90_open( trim(self%name), self%mode, self%ncid,       &
+                    comm=global_mpi%get_mpi_comm(),                &
+                    info=info%mpi_val)
 
     call check_err(ierr, routine, self%name)
 

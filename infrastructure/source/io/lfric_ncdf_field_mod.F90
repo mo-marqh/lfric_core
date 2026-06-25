@@ -14,7 +14,8 @@ module lfric_ncdf_field_mod
   use netcdf,              only: nf90_strerror, nf90_noerr, nf90_double,     &
                                  nf90_def_var, nf90_put_var, nf90_get_var,   &
                                  nf90_inq_varid, nf90_put_att, nf90_get_att, &
-                                 nf90_rename_var, nf90_nowrite
+                                 nf90_rename_var, nf90_nowrite,              &
+                                 nf90_var_par_access, nf90_collective
 
   implicit none
 
@@ -117,9 +118,11 @@ function lfric_ncdf_field_constructor(name, file, dims) result(self)
     character(len=*), parameter :: routine = 'read_data'
     character(len=str_long)     :: cmess
 
-    ierr = nf90_get_var(self%file%get_id(), self%varid, field_data(:))
-
+    ierr = nf90_var_par_access(self%file%get_id(), self%varid, nf90_collective)
     cmess = "Getting NetCDF variable with ID: " // trim(self%name)
+    call check_err(ierr, routine, cmess)
+
+    ierr = nf90_get_var(self%file%get_id(), self%varid, field_data(:))
     call check_err(ierr, routine, cmess)
 
     return
