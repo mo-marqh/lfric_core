@@ -76,6 +76,7 @@ module lfric_mpi_mod
     procedure, public :: initialise
     procedure, public :: finalise
     procedure, public :: get_comm
+    procedure, public :: get_mpi_comm
     procedure, public :: is_comm_set
     procedure, public :: global_sum_int32
     procedure, public :: global_sum_real64
@@ -343,6 +344,24 @@ contains
     type(lfric_comm_type) :: communicator
     communicator%comm = self%comm
   end function get_comm
+
+  !> Returns the stored raw MPI communicator
+  !> @return communicator The stored MPI communicator
+  !>
+  function get_mpi_comm(self) result(communicator)
+    implicit none
+    class(lfric_mpi_type), intent(in) :: self
+#ifdef NO_MPI
+    type(mpi_comm) :: communicator
+#else
+#ifdef LEGACY_MPI
+    integer        :: communicator
+#else
+    type(mpi_comm) :: communicator
+#endif
+#endif
+    communicator = self%comm
+  end function get_mpi_comm
 
   !> Returns whether the MPI communicator has been stored
   !> @return comm_state A flag indicating whether the MPI communicator is stored
