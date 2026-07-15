@@ -31,7 +31,12 @@ program lfric_xios_time_read_test
     call io_context%initialise_xios_context( test_db%config, &
                                              test_db%comm, &
                                              test_db%chi, test_db%panel_id, &
-                                             test_db%clock, test_db%calendar )
+                                             test_db%clock, test_db%calendar, &
+                                             test_db%config%base_mesh%geometry(), &
+                                             test_db%config%base_mesh%topology(), &
+                                             test_db%config%finite_element%coord_system(), &
+                                             test_db%config%planet%scaled_radius() )
+    call io_context%close_context_definition()
 
     allocate(check(10))
     check = [ xios_date(2024, 1, 1, 15, 1, 0), &
