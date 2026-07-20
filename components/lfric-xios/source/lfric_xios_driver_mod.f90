@@ -11,7 +11,7 @@ module lfric_xios_driver_mod
   use constants_mod, only: i_def
   use lfric_mpi_mod, only: lfric_comm_type
   use mod_wait,      only: init_wait
-  use xios,          only: xios_initialize, xios_finalize, lfric_xios_context_finalise
+  use xios,          only: xios_initialize, xios_finalize, xios_context_finalize
 
   implicit none
 
