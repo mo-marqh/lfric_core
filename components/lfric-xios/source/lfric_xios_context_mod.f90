@@ -20,8 +20,7 @@ module lfric_xios_context_mod
   use lfric_xios_file_mod,  only : lfric_xios_file_type
   use lfric_mpi_mod,        only : lfric_comm_type
   use log_mod,              only : log_event, log_scratch_space, &
-                                   log_level_error, log_level_debug, &
-                                   log_level_info
+                                   log_level_error, log_level_debug
   use lfric_xios_setup_mod, only : init_xios_calendar,   &
                                    init_xios_dimensions, &
                                    setup_xios_files
@@ -139,7 +138,7 @@ contains
 
     write(log_scratch_space, "(A)") &
         "Initialising XIOS context: " // this%get_context_name()
-    call log_event(log_scratch_space, log_level_info)
+    call log_event(log_scratch_space, log_level_debug)
     if ( LPROF ) call start_timing(timing_id, 'lfric_xios.init_context')
 
     if (present(start_at_zero)) then
@@ -190,11 +189,11 @@ contains
 
     ! Close the context definition - no more I/O configuration operations
     ! can be defined after this point
-    !if ( LPROF ) call start_timing(timing_id, 'xios.close_context_definition')
-    call log_event('XIOS context definition closing', log_level_info)
+    if ( LPROF ) call start_timing(timing_id, 'xios.close_context_definition')
+    call log_event('XIOS context definition closing', log_level_debug)
     call xios_close_context_definition()
-    !if ( LPROF ) call stop_timing(timing_id, 'xios.close_context_definition')
-    call log_event('XIOS context definition closed', log_level_info)
+    if ( LPROF ) call stop_timing(timing_id, 'xios.close_context_definition')
+    call log_event('XIOS context definition closed', log_level_debug)
 
     this%xios_context_initialised = .true.
 

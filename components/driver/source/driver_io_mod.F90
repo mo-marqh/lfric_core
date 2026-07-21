@@ -128,12 +128,8 @@ contains
       if (present(before_close)) then
         call before_close(modeldb%config, modeldb%clock)
       end if
-      
-      call log_event( "Before close context definition", log_level_info )
 
       call context%close_context_definition()
-      
-      call log_event( "After close context definition", log_level_info )
 
 #else
       call log_event( "Cannot use XIOS I/O: model has not been built with " // &
